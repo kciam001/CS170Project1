@@ -1,6 +1,6 @@
 
-import random
 import math
+import random
 
 goalState = [[1,2,3],
 			 [4,5,6],
@@ -9,20 +9,23 @@ goalState = [[1,2,3],
 class EightPuzzle:
 
 	def __init__(self):
-		# heuristic value
-		self.hval = 0
-		# search depth of current instance
+		self.state = [[1,2,3],
+			 		  [4,0,6],
+			 		  [7,5,8]]
+		self.hn = 0
 		self.depth = 0
-		# parent node in search path
 		self.parent = None
-		self.state = []
 
-	def __str__(self):
-		prnt = ''
-		for row in range(3):
-			prnt += ' '.join(map(str, self.state[row]))
-			prnt += '\r\n'
-		return prnt
+	def printState(self):
+		print self.state
+
+
+	def copy(self):
+		cpy = EightPuzzle()
+		for i in range(3):
+			cpy.state[i]= self.state[i][:]
+		return cpy
+
 
 	def setPuzzle(self, whichPuzzle):
 		if(whichPuzzle == 1):
@@ -43,9 +46,10 @@ class EightPuzzle:
 
 			self.state = [row1, row2, row3]	
 			
-		#print self.state
 		
-	def find(self, value):
+		
+
+	def findColumn(self, value):
 		#returns row and column coords
 		if value > 8 or value < 0:
 			raise Exception("out of range")
@@ -53,38 +57,103 @@ class EightPuzzle:
 		for row in range(3):
 			for column in range(3):
 				if self.state[row][column] == value:
-					return row, column
+					return column
+
+	def findRow(self, value):
+		#returns row and column coords
+		if value > 8 or value < 0:
+			raise Exception("out of range")
+
+		for row in range(3):
+			for column in range(3):
+				if self.state[row][column] == value:
+					return row
 
 	def findLegalMoves(self):
-
-		# get row and columnumn of the 0 cursor
-		row, column = self.find(0)
+		# get row and column of the 0 cursor
+		row = self.findRow(0)
+		column = self.findColumn(0)
 		free = []
+
 		
-		# find which pieces can move there
-		if row > 0:
-			free.append((row - 1, column))
-		if column > 0:
-			free.append((row, column - 1))
+		# find legal moves
+
 		if row < 2:
 			free.append((row + 1, column))
 		if column < 2:
 			free.append((row, column + 1))
+		if row > 0:
+			free.append((row - 1, column))
+		if column > 0:
+			free.append((row, column - 1))
 
 		return free
+
+	def createMoves(self):
+		moveList = []
+		legalMoves = self.findLegalMoves()
+
+		cursor = self.findRow(0), self.findColumn(0)
+
+
+		for i in legalMoves:
+			move = self.copy()
+			#self.printState()
+			#move.printState()
+			#print cursor
+			#print i 
+			move.swap(cursor,i)
+			#move.printState()
+			move.depth = self.depth + 1
+			move.parent = self
+			moveList.append(move)
+
+		#print moveList[0].depth
+		return moveList
+
+
+
+	def swap(self, x, y):
+		xrow, xcol = x
+		#print xrow
+		#print xcol
+		#print self.state[1][1]
+		xtemp = self.state[xrow][xcol]
+		yrow, ycol = y
+
+		self.state[xrow][xcol] = self.state[yrow][ycol]
+		self.state[yrow][ycol] = xtemp
+
+
+
+
 
 
 
 
 def main():
-
+	
 	puzzle = EightPuzzle()
 	print "Type \"1\" to use the default puzzle or \"2\" to enter your own: "
 	whichPuzzle = input()
 
 	puzzle.setPuzzle(whichPuzzle)
 
-	print puzzle
+	#puzzle.printState()
+	
+	#a = 1, 1
+	#b = 0, 1
+
+	#puzzle.swap(a, b)
+	puzzle.createMoves()
+
+	#puzzle.printState()
+
+
+
+	#print "test"
+	#puzzle.createMoves()
+
 
 
 
