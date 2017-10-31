@@ -45,7 +45,33 @@ class EightPuzzle:
 			
 		#print self.state
 		
+	def find(self, value):
+		#returns row and column coords
+		if value > 8 or value < 0:
+			raise Exception("out of range")
 
+		for row in range(3):
+			for column in range(3):
+				if self.state[row][column] == value:
+					return row, column
+
+	def findLegalMoves(self):
+
+		# get row and columnumn of the 0 cursor
+		row, column = self.find(0)
+		free = []
+		
+		# find which pieces can move there
+		if row > 0:
+			free.append((row - 1, column))
+		if column > 0:
+			free.append((row, column - 1))
+		if row < 2:
+			free.append((row + 1, column))
+		if column < 2:
+			free.append((row, column + 1))
+
+		return free
 
 
 
