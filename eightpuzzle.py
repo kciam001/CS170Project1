@@ -1,6 +1,7 @@
 
 import math
 import random
+import time
 
 goalState = [[1,2,3],
 			 [4,5,6],
@@ -9,32 +10,32 @@ goalState = [[1,2,3],
 class EightPuzzle:
 
 	def __init__(self):
+		#initialization
+		self.parent = 0
 		self.state = [[1,2,3],
 					  [4,0,6],
 					  [7,5,8]]
 		self.hn = 0
 		self.depth = 0
-		self.parent = None
+
 
 	def printState(self):
-
+		#helper function to print out the state
 		for i in range(len(self.state)):
 			print self.state[i][0], self.state[i][1], self.state[i][2]
 
 		print "\n"
 
-		
-
-
 
 	def copy(self):
 		cpy = EightPuzzle()
-		for i in range(3):
-			cpy.state[i]= self.state[i][:]
+		for row in range(3):
+			for col in range(3):
+				cpy.state[row][col] = self.state[row][col]
 		return cpy
 
 	def printSolutionTree(self):
-		if self.parent == None:
+		if self.parent == 0:
 			print "Expanding state"
 			self.printState()
 		else:
@@ -42,29 +43,31 @@ class EightPuzzle:
 			print "The best state to expand with a g(n) = " + str(self.depth) +  " and h(n) = " + str(self.hn) + " is... "
 			self.printState()
 
+	def setPuzzle(self):
 
+		print "Type \"1\" to use the default puzzle or \"2\" to enter your own: ",
+		while (True):
+			whichPuzzle = input()
+			if(whichPuzzle == 1):
+				self.state = [[1,2,3],
+							  [4,0,6],
+							  [7,5,8]]
+				return
+			elif(whichPuzzle == 2):
+				print "Enter your puzzle, use a zero to represent the blank"
+				print "Enter the 1st row, use space or tabs between numbers: "
+				a = raw_input()
+				row1 = map(int, a.split())
+				print "Enter the 2nd row, use space or tabs between numbers: "
+				a = raw_input()
+				row2 = map(int, a.split())
+				print "Enter the 3rd row, use space or tabs between numbers: "
+				a = raw_input()
+				row3 = map(int, a.split())	
 
-
-
-
-	def setPuzzle(self, whichPuzzle):
-		if(whichPuzzle == 1):
-			self.state = [[1,2,3],
-						  [4,0,6],
-						  [7,5,8]]
-		elif(whichPuzzle == 2):
-			print "Enter your puzzle, use a zero to represent the blank"
-			print "Enter the 1st row, use space or tabs between numbers: "
-			a = raw_input()
-			row1 = map(int, a.split())
-			print "Enter the 2nd row, use space or tabs between numbers: "
-			a = raw_input()
-			row2 = map(int, a.split())
-			print "Enter the 3rd row, use space or tabs between numbers: "
-			a = raw_input()
-			row3 = map(int, a.split())	
-
-			self.state = [row1, row2, row3]	
+				self.state = [row1, row2, row3]	
+				return
+			print "Please input 1 or 2: "
 			
 		
 		
@@ -118,26 +121,18 @@ class EightPuzzle:
 
 		for i in legalMoves:
 			move = self.copy()
-			#self.printState()
-			#move.printState()
-			#print cursor
-			#print i 
 			move.swap(cursor,i)
-			#move.printState()
 			move.depth = self.depth + 1
 			move.parent = self
 			moveList.append(move)
 
-		#print moveList[0].depth
 		return moveList
 
 
-
+		#to move the cursor
 	def swap(self, x, y):
 		xrow, xcol = x
-		#print xrow
-		#print xcol
-		#print self.state[1][1]
+
 		xtemp = self.state[xrow][xcol]
 		yrow, ycol = y
 
@@ -149,7 +144,7 @@ class EightPuzzle:
 	def pathToSolution(self, path):
 
 
-		if self.parent == None:
+		if self.parent == 0:
 
 			return path
 		else:
@@ -157,17 +152,19 @@ class EightPuzzle:
 			path.append(self)
 			return self.parent.pathToSolution(path)
 
-	def solvePuzzle(self, heuristicFunction):
+	def solver(self, heuristicFunction):
 
 		nodes = [self]
 		closed = []
-		maxDepth = 0
 		maxNodesinQueue = -1
-		totalExpanded = 0
+		totalNodesExpanded = 0
 
-		while len(nodes) > 0:
 
-			
+		while True:
+
+			if(len(nodes) < 1):
+				return [], 0, 0
+
 			front = nodes.pop(0)
 
 			if maxNodesinQueue < len(nodes):
@@ -177,12 +174,13 @@ class EightPuzzle:
 			#check if solved
 			if (front.state == goalState):
 				if len(closed) > 0:
-					return front.pathToSolution([]), maxDepth, maxNodesinQueue
+					goalDepth = front.depth
+					return front.pathToSolution([]), totalNodesExpanded, maxNodesinQueue
 				else:
 					return [front]
 
 			#if it's not solved, see what moves we can make
-			maxDepth += 1
+			
 			possibleMoves = front.createMoves()
 
 			indexNodes = -1
@@ -192,29 +190,51 @@ class EightPuzzle:
 
 				#check if we have seen this move
 				count = 0
+				foundFlag = False
 
-				for i in nodes:
-					if currMove == i:
-						indexNodes = count
-					count += 1
+				if len(nodes) != 0:
+					for i in nodes:
+						#if currMove == i:
+						if currMove.state == i.state:
+							indexNodes = count
+							foundFlag = True
+							break
+						count += 1
+
+					if not foundFlag:
+						indexNodes = -1
 
 				count = 0
-				for i in closed:
-					if currMove == i:
-						indexClosed = count
-					count += 1
+				foundFlag = False	
+
+				if len(closed) != 0:
+
+					for i in closed:
+						#if currMove == i:
+						if currMove.state == i.state:
+							indexClosed = count
+							foundFlag = True
+							break
+						count += 1
+
+					if not foundFlag:
+						indexClosed = -1
+
 
 
 				#setting h(n)
 
 				hn = heuristicFunction(currMove)
 				#total cost
+
 				cost = hn + currMove.depth
 
 				#if current move hasnt been seen yet
 				if indexNodes == -1 and indexClosed == -1:
 					currMove.hn = hn
 					nodes.append(currMove)
+
+					totalNodesExpanded += 1
 
 				#else if node is in the queue
 
@@ -225,15 +245,16 @@ class EightPuzzle:
 					#check if this move is better
 					if cost < copy.hn + copy.depth:
 						#if it's better copy over the cost
-						copy.hn =hn
+						copy.hn = hn
 						copy.parent = currMove.parent
 						copy.depth = currMove.depth
 
 
-				#else if node is has already been checked
+				#else if node is has already been closed
 				elif indexClosed > -1:
 					#make a copy
 					copy = closed[indexClosed]
+
 
 					if cost < copy.hn + copy.depth:
 
@@ -243,12 +264,14 @@ class EightPuzzle:
 						nodes.append(currMove)
 
 			#close node
-			closed.append(currMove)
+			closed.append(front)
 			#sort queue
-			nodes = sorted(nodes, key = lambda p: p.hn + p.depth)
 
-		#if we finish and theres no goal state found, return failure
-		return [], 0, 0
+			
+			nodes = sorted(nodes, key = lambda cost: cost.depth + cost.hn)
+
+
+
 
 
 
@@ -318,60 +341,90 @@ def manhattanDistance(puzzle):
 	return hn
 
 
-			
+def misplacedTile(puzzle):
+	
+	hn = 0
+
+	if puzzle.state[0][0] != 1:
+		hn += 1
+	if puzzle.state[0][1] != 2:
+		hn += 1
+	if puzzle.state[0][2] != 3:
+		hn += 1
+	if puzzle.state[1][0] != 4:
+		hn += 1
+	if puzzle.state[1][1] != 5:
+		hn += 1
+	if puzzle.state[1][2] != 6:
+		hn += 1	
+	if puzzle.state[2][0] != 7:
+		hn += 1
+	if puzzle.state[2][1] != 8:
+		hn += 1
+
+	return hn
+
+def uniformCost(puzzle):
+	
+	hn = 0
+	return hn
 
 
+def solvePuzzle(puzzle, heuristicFunction):
+
+	start = time.time()
+	solutionPath, totalNodes, maxNodes = puzzle.solver(heuristicFunction)
+	# test = puzzle.createMoves()
+	# for i in test:
+	# 	i.printState()
+	end = time.time()
+	solutionPath.reverse
+
+	goalDepth = solutionPath[0].depth
+	solutionPath[0].printSolutionTree()
+	print "To solve this problem the search algorithm expanded a total of " + str(totalNodes) + " nodes."
+	print "The maximum number of nodes in the queue at any one time was " + str(maxNodes) +"."
+	print "The depth of the goal node was " + str(goalDepth) +"."
+
+	elapsedTime = end - start
+	print "Time took to solve: "+ str(elapsedTime) + " seconds. \n"
 
 
+def whichAlgorithm(puzzle):
+	print "Enter your choice of algorithm"
+	print "1. Uniform Cost Search"
+	print "2. A* with the Misplaced Tile heuristic."
+	print "3. A* with Manhattan distance heuristic."
 
 
+	while(True):
+		choice = input()
+		if(choice == 1):
+			print "Solving with Uniform Cost Search: "
+			solvePuzzle(puzzle, uniformCost)
+			return
 
+		if(choice == 2):
+			print "Solving with Misplaced Tile Heuristic: "
+			solvePuzzle(puzzle, misplacedTile)
+			return
 
-
+		if(choice == 3):
+			print "Solving with Manhattan Distance Heuristic: "
+			solvePuzzle(puzzle, manhattanDistance)
+			return
+		print "Please input 1, 2 or 3: "
+		
 
 
 def main():
 	
+	print "Welcome to the awesome 8-puzzle solver."
 	puzzle = EightPuzzle()
-	print "Type \"1\" to use the default puzzle or \"2\" to enter your own: ",
-	whichPuzzle = input()
 
-
-	puzzle.setPuzzle(whichPuzzle)
-
-	print "Original: "
-	puzzle.printState()
-
+	puzzle.setPuzzle()
 	print "\n"
-	solutionPath, numberOfMoves, maxNodes = puzzle.solvePuzzle(manhattanDistance)
-
-	solutionPath.reverse
-
-	solutionPath[0].printSolutionTree()
-
-	#solutionPath[0].printState()
-	#print "\n"
-	#solutionPath[0].parent.printState()
-
-	
-	print "The maximum number of nodes in the queue at any one time was " + str(maxNodes) +"."
-	print "The depth of the goal node was " + str(numberOfMoves) +"."
-
-	#puzzle.printState()
-	
-	#a = 1, 1
-	#b = 0, 1
-
-	#puzzle.swap(a, b)
-	#puzzle.createMoves()
-
-	#puzzle.printState()
-
-
-
-	#print "test"
-	#puzzle.createMoves()
-
+	whichAlgorithm(puzzle)
 
 
 
