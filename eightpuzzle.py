@@ -1,6 +1,4 @@
-
 import math
-import random
 import time
 
 goalState = [[1,2,3],
@@ -177,7 +175,7 @@ class EightPuzzle:
 					goalDepth = front.depth
 					return front.pathToSolution([]), totalNodesExpanded, maxNodesinQueue
 				else:
-					return [front]
+					return [front], totalNodesExpanded, maxNodesinQueue
 
 			#if it's not solved, see what moves we can make
 			
